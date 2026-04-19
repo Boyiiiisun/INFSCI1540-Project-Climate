@@ -19,8 +19,8 @@ from mysql.connector import Error
 
 HOST = os.getenv("ODB_HOST", "localhost")
 PORT = int(os.getenv("ODB_PORT", "13306"))
-USER = os.getenv("ODB_USER", "deuser")
-PASSWORD = os.getenv("ODB_PASSWORD", "depassword")
+USER = os.getenv("ODB_USER", "root")
+PASSWORD = os.getenv("ODB_PASSWORD", "secret")
 DATABASE = os.getenv("ODB_DATABASE", "odb")
 
 CREATE_DATABASE_SQL = f"CREATE DATABASE IF NOT EXISTS `{DATABASE}`"

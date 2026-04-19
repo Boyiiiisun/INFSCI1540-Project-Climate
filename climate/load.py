@@ -29,14 +29,14 @@ from mysql.connector import Error
 
 ODB_HOST = os.getenv("ODB_HOST", "localhost")
 ODB_PORT = int(os.getenv("ODB_PORT", "13306"))
-ODB_USER = os.getenv("ODB_USER", "deuser")
-ODB_PASSWORD = os.getenv("ODB_PASSWORD", "depassword")
+ODB_USER = os.getenv("ODB_USER", "root")
+ODB_PASSWORD = os.getenv("ODB_PASSWORD", "secret")
 ODB_DATABASE = os.getenv("ODB_DATABASE", "odb")
 
 DW_HOST = os.getenv("DW_HOST", "localhost")
 DW_PORT = int(os.getenv("DW_PORT", "23306"))
-DW_USER = os.getenv("DW_USER", "deuser")
-DW_PASSWORD = os.getenv("DW_PASSWORD", "depassword")
+DW_USER = os.getenv("DW_USER", "root")
+DW_PASSWORD = os.getenv("DW_PASSWORD", "secret")
 DW_DATABASE = os.getenv("DW_DATABASE", "dw")
 
 
