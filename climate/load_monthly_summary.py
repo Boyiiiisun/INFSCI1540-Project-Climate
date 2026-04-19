@@ -35,8 +35,8 @@ TOPIC = os.getenv("KAFKA_TOPIC", "NORMAL_DLY_MONTHLY_SUMMARY")
 
 DW_HOST = os.getenv("DW_HOST", "localhost")
 DW_PORT = int(os.getenv("DW_PORT", "23306"))
-DW_USER = os.getenv("DW_USER", "deuser")
-DW_PASSWORD = os.getenv("DW_PASSWORD", "depassword")
+DW_USER = os.getenv("DW_USER", "root")
+DW_PASSWORD = os.getenv("DW_PASSWORD", "secret")
 DW_DATABASE = os.getenv("DW_DATABASE", "dw")
 
 

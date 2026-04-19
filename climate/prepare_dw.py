@@ -19,8 +19,8 @@ from mysql.connector import Error
 
 HOST = os.getenv("DW_HOST", "localhost")
 PORT = int(os.getenv("DW_PORT", "23306"))
-USER = os.getenv("DW_USER", "deuser")
-PASSWORD = os.getenv("DW_PASSWORD", "depassword")
+USER = os.getenv("DW_USER", "root")
+PASSWORD = os.getenv("DW_PASSWORD", "secret")
 DATABASE = os.getenv("DW_DATABASE", "dw")
 
 CREATE_DATABASE_SQL = f"CREATE DATABASE IF NOT EXISTS `{DATABASE}`"

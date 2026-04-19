@@ -34,8 +34,8 @@ KAFKA_TOPIC = os.getenv("KAFKA_TOPIC", "NORMAL_DLY_RAW")
 
 ODB_HOST = os.getenv("ODB_HOST", "localhost")
 ODB_PORT = int(os.getenv("ODB_PORT", "13306"))
-ODB_USER = os.getenv("ODB_USER", "deuser")
-ODB_PASSWORD = os.getenv("ODB_PASSWORD", "depassword")
+ODB_USER = os.getenv("ODB_USER", "root")
+ODB_PASSWORD = os.getenv("ODB_PASSWORD", "secret")
 ODB_DATABASE = os.getenv("ODB_DATABASE", "odb")
 
 
