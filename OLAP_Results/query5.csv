@@ -1,0 +1,5 @@
+"station_id","station_name","year_num","annual_avg_temperature","annual_max_temperature","annual_min_temperature","annual_temperature_range","annual_total_precipitation","wettest_month_name","wettest_month_precipitation","annual_temperature_range_rank"
+"GHCND:USC00327027","PETERSBURG 2 N ND US","2010","386.11","805.00","-48.00","853.00","2022.00","June","376.00","1"
+"GHCND:USW00094823","PITTSBURGH INTL AP PA US","2010","512.67","827.00","209.00","618.00","3819.00","June","430.00","2"
+"GHCND:USW00024281","SEATTLE URBAN SITE WA US","2010","534.88","772.00","355.00","417.00","3772.00","December","606.00","3"
+"GHCND:USC00047767","SAN FRANCISCO OCEANSD CA US","2010","552.75","647.00","447.00","200.00","2068.00","January","418.00","4"
