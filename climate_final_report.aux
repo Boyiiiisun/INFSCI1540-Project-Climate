@@ -1,0 +1,48 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand*\HyPL@Entry[1]{}
+\HyPL@Entry{0<</S/D>>}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Project Overview}{1}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Data Description}{1}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Docker Containers Used in the System and Corresponding \texttt  {docker-compose.yml}}{2}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Container Roles}{2}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Docker Compose File}{3}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Data Preparation Process, Cleaning, and Transformation}{5}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Step 1: CSV Ingestion into Kafka}{5}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Step 2: Loading Raw Operational Data into ODB}{5}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Step 3: ksqlDB Stream Cleaning and Transformation}{6}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Step 4: Loading the Star Schema}{6}{subsection.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}STAR Schema Design}{7}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Schema Overview}{7}{subsection.5.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces STAR schema design for the climate data warehouse.}}{7}{figure.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Dimension Table: \texttt  {dim\_date}}{7}{subsection.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Dimension Table: \texttt  {dim\_station}}{8}{subsection.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Fact Table: \texttt  {fact\_daily\_climate\_normal}}{8}{subsection.5.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}SQL Statements Used to Populate the STAR Schema}{8}{subsection.5.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Populate \texttt  {dim\_station}}{8}{subsection.5.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Populate \texttt  {dim\_date}}{9}{lstnumber.-6.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Populate \texttt  {fact\_daily\_climate\_normal}}{9}{lstnumber.-7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Data Streams}{9}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Overview of the Stream Pipeline}{9}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Source Data Stream}{9}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Kafka Topic and Stream Definition}{10}{subsection.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Continuous Query Processing}{10}{subsection.6.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}Continuous Aggregation with ksqlDB}{10}{subsection.6.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.6}Loading Aggregated Results into the Data Warehouse}{10}{subsection.6.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.7}Benefits of the Modified Stream Design}{10}{subsection.6.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Specification of Pre-Aggregated Summary Tables}{11}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Warehouse Summary Table DDL}{11}{subsection.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}SQL for Creation and Population of Summary Data in ksqlDB}{11}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Loading Summary Data into the Warehouse}{12}{subsection.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}OLAP Data Warehouse Queries}{12}{section.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Query 1: Monthly Climate Summary by Station}{13}{subsection.8.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Result of Query 1: monthly climate summary by station.}}{14}{figure.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}Query 2: Coastal Seattle vs. Inland Petersburg Monthly Comparison}{14}{subsection.8.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Result of Query 2: coastal Seattle versus inland Petersburg.}}{16}{figure.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Query 3: Seasonal Comparison Between San Francisco and Pittsburgh}{16}{subsection.8.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Result of Query 3: seasonal comparison between San Francisco and Pittsburgh.}}{18}{figure.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Query 4: Seattle vs. San Francisco Monthly Difference Ranking}{18}{subsection.8.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Result of Query 4: Seattle versus San Francisco monthly difference ranking.}}{20}{figure.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.5}Query 5: Annual Climate Profile and Wettest Month by Station}{20}{subsection.8.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Result of Query 5: annual climate profile and wettest month by station.}}{23}{figure.6}\protected@file@percent }
+\gdef \@abspage@last{23}
