@@ -1,8 +1,8 @@
 USE dw;
 
 -- Convert raw NOAA-style units once:
---   temperature: stored in tenths of degrees Fahrenheit -> degrees Fahrenheit
---   precipitation: stored in hundredths of inches      -> inches
+--   temperature: stored in tenths of degrees Fahrenheit
+--   precipitation: stored in hundredths of inches
 CREATE OR REPLACE VIEW vw_daily_climate_imperial AS
 SELECT
     ds.station_id,
