@@ -1,23 +1,22 @@
 USE dw;
 
--- OLAP Query 1:
--- Monthly average temperature, monthly max temperature,
--- monthly min temperature, and monthly total precipitation by station.
+-- Convert raw NOAA-style units once:
+--   temperature: stored in tenths of degrees Fahrenheit -> degrees Fahrenheit
+--   precipitation: stored in hundredths of inches      -> inches
+CREATE OR REPLACE VIEW vw_daily_climate_imperial AS
 SELECT
     ds.station_id,
     ds.station_name,
+    ds.latitude,
+    ds.longitude,
     dd.year_num,
     dd.month_num,
     dd.month_name,
-    COUNT(*) AS num_days,
-    ROUND(AVG((f.dly_tmin_normal + f.dly_tmax_normal) / 2), 2)
-        AS monthly_avg_temperature_normal,
-    ROUND(MAX(f.dly_tmax_normal), 2)
-        AS monthly_max_temperature_normal,
-    ROUND(MIN(f.dly_tmin_normal), 2)
-        AS monthly_min_temperature_normal,
-    ROUND(MAX(f.mtd_prcp_normal), 2)
-        AS monthly_total_precipitation_normal
+    dd.quarter_num,
+    dd.full_date,
+    ROUND(f.dly_tmin_normal / 10.0, 2) AS dly_tmin_normal_f,
+    ROUND(f.dly_tmax_normal / 10.0, 2) AS dly_tmax_normal_f,
+    ROUND(f.mtd_prcp_normal / 100.0, 2) AS mtd_prcp_normal_in
 FROM fact_daily_climate_normal f
 JOIN dim_date dd
     ON f.date_key = dd.date_key
@@ -26,118 +25,107 @@ JOIN dim_station ds
 WHERE
     f.dly_tmin_normal IS NOT NULL
     AND f.dly_tmax_normal IS NOT NULL
-    AND f.mtd_prcp_normal IS NOT NULL
+    AND f.mtd_prcp_normal IS NOT NULL;
+
+CREATE OR REPLACE VIEW vw_monthly_climate_imperial AS
+SELECT
+    station_id,
+    station_name,
+    latitude,
+    longitude,
+    year_num,
+    month_num,
+    month_name,
+    COUNT(*) AS num_days,
+    ROUND(AVG((dly_tmin_normal_f + dly_tmax_normal_f) / 2), 2)
+        AS monthly_avg_temperature_f,
+    ROUND(MAX(dly_tmax_normal_f), 2) AS monthly_max_temperature_f,
+    ROUND(MIN(dly_tmin_normal_f), 2) AS monthly_min_temperature_f,
+    ROUND(MAX(mtd_prcp_normal_in), 2) AS monthly_total_precipitation_in
+FROM vw_daily_climate_imperial
 GROUP BY
-    ds.station_id,
-    ds.station_name,
-    dd.year_num,
-    dd.month_num,
-    dd.month_name
+    station_id,
+    station_name,
+    latitude,
+    longitude,
+    year_num,
+    month_num,
+    month_name;
+
+-- OLAP Query 1:
+-- Monthly station-level climate summary using converted units.
+SELECT
+    station_id,
+    station_name,
+    year_num,
+    month_num,
+    month_name,
+    num_days,
+    monthly_avg_temperature_f AS monthly_avg_temperature_normal,
+    monthly_max_temperature_f AS monthly_max_temperature_normal,
+    monthly_min_temperature_f AS monthly_min_temperature_normal,
+    monthly_total_precipitation_in AS monthly_total_precipitation_normal
+FROM vw_monthly_climate_imperial
 ORDER BY
-    ds.station_name,
-    dd.year_num,
-    dd.month_num;
+    station_name,
+    year_num,
+    month_num;
 
 -- OLAP Query 2:
 -- Compare similar-latitude coastal and inland stations:
 -- Seattle Urban Site, WA vs Petersburg 2 N, ND.
--- This query pivots the two stations into the same monthly row so their
--- temperature and precipitation differences are easy to compare.
-WITH monthly_station AS (
+WITH comparison_months AS (
     SELECT
-        ds.station_id,
-        ds.station_name,
-        CASE
-            WHEN ds.station_id = 'GHCND:USW00024281' THEN 'Coastal Seattle'
-            WHEN ds.station_id = 'GHCND:USC00327027' THEN 'Inland Petersburg'
-        END AS comparison_group,
-        dd.year_num,
-        dd.month_num,
-        dd.month_name,
-        ROUND(AVG((f.dly_tmin_normal + f.dly_tmax_normal) / 2), 2)
-            AS monthly_avg_temperature_normal,
-        ROUND(MAX(f.mtd_prcp_normal), 2)
-            AS monthly_total_precipitation_normal
-    FROM fact_daily_climate_normal f
-    JOIN dim_date dd
-        ON f.date_key = dd.date_key
-    JOIN dim_station ds
-        ON f.station_key = ds.station_key
-    WHERE ds.station_id IN ('GHCND:USW00024281', 'GHCND:USC00327027')
+        year_num,
+        month_num,
+        month_name,
+        MAX(CASE
+            WHEN station_id = 'GHCND:USW00024281'
+            THEN monthly_avg_temperature_f
+        END) AS seattle_avg_temperature,
+        MAX(CASE
+            WHEN station_id = 'GHCND:USC00327027'
+            THEN monthly_avg_temperature_f
+        END) AS petersburg_avg_temperature,
+        MAX(CASE
+            WHEN station_id = 'GHCND:USW00024281'
+            THEN monthly_total_precipitation_in
+        END) AS seattle_total_precipitation,
+        MAX(CASE
+            WHEN station_id = 'GHCND:USC00327027'
+            THEN monthly_total_precipitation_in
+        END) AS petersburg_total_precipitation
+    FROM vw_monthly_climate_imperial
+    WHERE station_id IN ('GHCND:USW00024281', 'GHCND:USC00327027')
     GROUP BY
-        ds.station_id,
-        ds.station_name,
-        comparison_group,
-        dd.year_num,
-        dd.month_num,
-        dd.month_name
+        year_num,
+        month_num,
+        month_name
 )
 SELECT
     year_num,
     month_num,
     month_name,
-    MAX(CASE WHEN comparison_group = 'Coastal Seattle'
-        THEN monthly_avg_temperature_normal END) AS seattle_avg_temperature,
-    MAX(CASE WHEN comparison_group = 'Inland Petersburg'
-        THEN monthly_avg_temperature_normal END) AS petersburg_avg_temperature,
+    seattle_avg_temperature,
+    petersburg_avg_temperature,
     ROUND(
-        MAX(CASE WHEN comparison_group = 'Coastal Seattle'
-            THEN monthly_avg_temperature_normal END)
-        - MAX(CASE WHEN comparison_group = 'Inland Petersburg'
-            THEN monthly_avg_temperature_normal END),
+        seattle_avg_temperature - petersburg_avg_temperature,
         2
     ) AS seattle_minus_petersburg_avg_temperature,
-    MAX(CASE WHEN comparison_group = 'Coastal Seattle'
-        THEN monthly_total_precipitation_normal END) AS seattle_total_precipitation,
-    MAX(CASE WHEN comparison_group = 'Inland Petersburg'
-        THEN monthly_total_precipitation_normal END) AS petersburg_total_precipitation,
+    seattle_total_precipitation,
+    petersburg_total_precipitation,
     ROUND(
-        MAX(CASE WHEN comparison_group = 'Coastal Seattle'
-            THEN monthly_total_precipitation_normal END)
-        - MAX(CASE WHEN comparison_group = 'Inland Petersburg'
-            THEN monthly_total_precipitation_normal END),
+        seattle_total_precipitation - petersburg_total_precipitation,
         2
     ) AS seattle_minus_petersburg_precipitation
-FROM monthly_station
-GROUP BY
-    year_num,
-    month_num,
-    month_name
+FROM comparison_months
 ORDER BY
     year_num,
     month_num;
 
 -- OLAP Query 3:
--- Compare a west-coast major city station and an east/inland major city station:
--- San Francisco, CA vs Pittsburgh, PA.
--- This query rolls months into seasons to show broader regional differences.
-WITH monthly_station AS (
-    SELECT
-        ds.station_id,
-        ds.station_name,
-        dd.year_num,
-        dd.month_num,
-        ROUND(AVG((f.dly_tmin_normal + f.dly_tmax_normal) / 2), 2)
-            AS monthly_avg_temperature_normal,
-        ROUND(MAX(f.dly_tmax_normal), 2)
-            AS monthly_max_temperature_normal,
-        ROUND(MIN(f.dly_tmin_normal), 2)
-            AS monthly_min_temperature_normal,
-        ROUND(MAX(f.mtd_prcp_normal), 2)
-            AS monthly_total_precipitation_normal
-    FROM fact_daily_climate_normal f
-    JOIN dim_date dd
-        ON f.date_key = dd.date_key
-    JOIN dim_station ds
-        ON f.station_key = ds.station_key
-    WHERE ds.station_id IN ('GHCND:USC00047767', 'GHCND:USW00094823')
-    GROUP BY
-        ds.station_id,
-        ds.station_name,
-        dd.year_num,
-        dd.month_num
-),
-seasonal_station AS (
+-- Compare San Francisco, CA vs Pittsburgh, PA by season.
+WITH seasonal_station AS (
     SELECT
         station_id,
         station_name,
@@ -154,15 +142,13 @@ seasonal_station AS (
             WHEN month_num IN (6, 7, 8) THEN 3
             ELSE 4
         END AS season_order,
-        ROUND(AVG(monthly_avg_temperature_normal), 2)
-            AS seasonal_avg_temperature,
-        ROUND(MAX(monthly_max_temperature_normal), 2)
-            AS seasonal_max_temperature,
-        ROUND(MIN(monthly_min_temperature_normal), 2)
-            AS seasonal_min_temperature,
-        ROUND(SUM(monthly_total_precipitation_normal), 2)
+        ROUND(AVG(monthly_avg_temperature_f), 2) AS seasonal_avg_temperature,
+        ROUND(MAX(monthly_max_temperature_f), 2) AS seasonal_max_temperature,
+        ROUND(MIN(monthly_min_temperature_f), 2) AS seasonal_min_temperature,
+        ROUND(SUM(monthly_total_precipitation_in), 2)
             AS seasonal_total_precipitation
-    FROM monthly_station
+    FROM vw_monthly_climate_imperial
+    WHERE station_id IN ('GHCND:USC00047767', 'GHCND:USW00094823')
     GROUP BY
         station_id,
         station_name,
@@ -187,60 +173,42 @@ ORDER BY
     station_name;
 
 -- OLAP Query 4:
--- Compare two west-coast stations at different latitudes:
--- Seattle, WA vs San Francisco, CA.
--- This query ranks months by the absolute temperature difference between them.
-WITH monthly_station AS (
+-- Compare Seattle, WA vs San Francisco, CA and rank monthly temperature gaps.
+WITH paired_months AS (
     SELECT
-        ds.station_id,
-        ds.station_name,
-        ds.latitude,
-        ds.longitude,
-        dd.year_num,
-        dd.month_num,
-        dd.month_name,
-        ROUND(AVG((f.dly_tmin_normal + f.dly_tmax_normal) / 2), 2)
-            AS monthly_avg_temperature_normal,
-        ROUND(MAX(f.mtd_prcp_normal), 2)
-            AS monthly_total_precipitation_normal
-    FROM fact_daily_climate_normal f
-    JOIN dim_date dd
-        ON f.date_key = dd.date_key
-    JOIN dim_station ds
-        ON f.station_key = ds.station_key
-    WHERE ds.station_id IN ('GHCND:USW00024281', 'GHCND:USC00047767')
+        year_num,
+        month_num,
+        month_name,
+        MAX(CASE
+            WHEN station_id = 'GHCND:USW00024281'
+            THEN latitude
+        END) AS seattle_latitude,
+        MAX(CASE
+            WHEN station_id = 'GHCND:USC00047767'
+            THEN latitude
+        END) AS san_francisco_latitude,
+        MAX(CASE
+            WHEN station_id = 'GHCND:USW00024281'
+            THEN monthly_avg_temperature_f
+        END) AS seattle_avg_temperature,
+        MAX(CASE
+            WHEN station_id = 'GHCND:USC00047767'
+            THEN monthly_avg_temperature_f
+        END) AS san_francisco_avg_temperature,
+        MAX(CASE
+            WHEN station_id = 'GHCND:USW00024281'
+            THEN monthly_total_precipitation_in
+        END) AS seattle_total_precipitation,
+        MAX(CASE
+            WHEN station_id = 'GHCND:USC00047767'
+            THEN monthly_total_precipitation_in
+        END) AS san_francisco_total_precipitation
+    FROM vw_monthly_climate_imperial
+    WHERE station_id IN ('GHCND:USW00024281', 'GHCND:USC00047767')
     GROUP BY
-        ds.station_id,
-        ds.station_name,
-        ds.latitude,
-        ds.longitude,
-        dd.year_num,
-        dd.month_num,
-        dd.month_name
-),
-paired_months AS (
-    SELECT
-        sea.year_num,
-        sea.month_num,
-        sea.month_name,
-        sea.latitude AS seattle_latitude,
-        sf.latitude AS san_francisco_latitude,
-        sea.monthly_avg_temperature_normal AS seattle_avg_temperature,
-        sf.monthly_avg_temperature_normal AS san_francisco_avg_temperature,
-        ROUND(sf.monthly_avg_temperature_normal
-            - sea.monthly_avg_temperature_normal, 2)
-            AS san_francisco_minus_seattle_temperature,
-        sea.monthly_total_precipitation_normal AS seattle_total_precipitation,
-        sf.monthly_total_precipitation_normal AS san_francisco_total_precipitation,
-        ROUND(sf.monthly_total_precipitation_normal
-            - sea.monthly_total_precipitation_normal, 2)
-            AS san_francisco_minus_seattle_precipitation
-    FROM monthly_station sea
-    JOIN monthly_station sf
-        ON sea.year_num = sf.year_num
-        AND sea.month_num = sf.month_num
-    WHERE sea.station_id = 'GHCND:USW00024281'
-        AND sf.station_id = 'GHCND:USC00047767'
+        year_num,
+        month_num,
+        month_name
 )
 SELECT
     year_num,
@@ -250,12 +218,20 @@ SELECT
     san_francisco_latitude,
     seattle_avg_temperature,
     san_francisco_avg_temperature,
-    san_francisco_minus_seattle_temperature,
+    ROUND(
+        san_francisco_avg_temperature - seattle_avg_temperature,
+        2
+    ) AS san_francisco_minus_seattle_temperature,
     seattle_total_precipitation,
     san_francisco_total_precipitation,
-    san_francisco_minus_seattle_precipitation,
-    RANK() OVER (
-        ORDER BY ABS(san_francisco_minus_seattle_temperature) DESC
+    ROUND(
+        san_francisco_total_precipitation - seattle_total_precipitation,
+        2
+    ) AS san_francisco_minus_seattle_precipitation,
+    RANK() OVER (s
+        ORDER BY ABS(
+            san_francisco_avg_temperature - seattle_avg_temperature
+        ) DESC
     ) AS temperature_difference_rank
 FROM paired_months
 ORDER BY
@@ -265,52 +241,21 @@ ORDER BY
 
 -- OLAP Query 5:
 -- Annual climate profile by station.
--- This query adds more OLAP variety by combining yearly averages,
--- annual temperature range, annual precipitation, and wettest month ranking.
-WITH monthly_station AS (
-    SELECT
-        ds.station_id,
-        ds.station_name,
-        dd.year_num,
-        dd.month_num,
-        dd.month_name,
-        ROUND(AVG((f.dly_tmin_normal + f.dly_tmax_normal) / 2), 2)
-            AS monthly_avg_temperature_normal,
-        ROUND(MAX(f.dly_tmax_normal), 2)
-            AS monthly_max_temperature_normal,
-        ROUND(MIN(f.dly_tmin_normal), 2)
-            AS monthly_min_temperature_normal,
-        ROUND(MAX(f.mtd_prcp_normal), 2)
-            AS monthly_total_precipitation_normal
-    FROM fact_daily_climate_normal f
-    JOIN dim_date dd
-        ON f.date_key = dd.date_key
-    JOIN dim_station ds
-        ON f.station_key = ds.station_key
-    GROUP BY
-        ds.station_id,
-        ds.station_name,
-        dd.year_num,
-        dd.month_num,
-        dd.month_name
-),
-annual_profile AS (
+WITH annual_profile AS (
     SELECT
         station_id,
         station_name,
         year_num,
-        ROUND(AVG(monthly_avg_temperature_normal), 2)
-            AS annual_avg_temperature,
-        ROUND(MAX(monthly_max_temperature_normal), 2)
-            AS annual_max_temperature,
-        ROUND(MIN(monthly_min_temperature_normal), 2)
-            AS annual_min_temperature,
-        ROUND(MAX(monthly_max_temperature_normal)
-            - MIN(monthly_min_temperature_normal), 2)
-            AS annual_temperature_range,
-        ROUND(SUM(monthly_total_precipitation_normal), 2)
+        ROUND(AVG(monthly_avg_temperature_f), 2) AS annual_avg_temperature,
+        ROUND(MAX(monthly_max_temperature_f), 2) AS annual_max_temperature,
+        ROUND(MIN(monthly_min_temperature_f), 2) AS annual_min_temperature,
+        ROUND(
+            MAX(monthly_max_temperature_f) - MIN(monthly_min_temperature_f),
+            2
+        ) AS annual_temperature_range,
+        ROUND(SUM(monthly_total_precipitation_in), 2)
             AS annual_total_precipitation
-    FROM monthly_station
+    FROM vw_monthly_climate_imperial
     GROUP BY
         station_id,
         station_name,
@@ -321,12 +266,12 @@ wettest_month AS (
         station_id,
         year_num,
         month_name AS wettest_month_name,
-        monthly_total_precipitation_normal AS wettest_month_precipitation,
+        monthly_total_precipitation_in AS wettest_month_precipitation,
         ROW_NUMBER() OVER (
             PARTITION BY station_id, year_num
-            ORDER BY monthly_total_precipitation_normal DESC, month_num
+            ORDER BY monthly_total_precipitation_in DESC, month_num
         ) AS precipitation_rank
-    FROM monthly_station
+    FROM vw_monthly_climate_imperial
 )
 SELECT
     ap.station_id,
