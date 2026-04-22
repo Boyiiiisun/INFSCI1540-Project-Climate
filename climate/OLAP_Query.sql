@@ -228,7 +228,7 @@ SELECT
         san_francisco_total_precipitation - seattle_total_precipitation,
         2
     ) AS san_francisco_minus_seattle_precipitation,
-    RANK() OVER (s
+    RANK() OVER (
         ORDER BY ABS(
             san_francisco_avg_temperature - seattle_avg_temperature
         ) DESC
