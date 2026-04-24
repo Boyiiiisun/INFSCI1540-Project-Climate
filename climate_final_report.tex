@@ -842,4 +842,16 @@ ORDER BY
 
 Query 5 builds an annual climate profile for each station from the shared monthly view. It calculates annual average, maximum, and minimum temperature normals, annual temperature range, annual total precipitation, and the wettest month for each station. The result supports annual-level comparison by showing which stations have the largest temperature variability and how precipitation patterns differ across locations.
 
+\section{Limitation and Future Work}
+Although this project successfully implements a complete climate data warehouse pipeline, it still has several limitations.
+
+The current dataset only includes four weather stations, so the analysis is suitable for demonstrating station-level comparison but not sufficient for drawing national-level conclusions about climate patterns across the United States.
+
+The project mainly focuses on selected daily climate normal attributes, including minimum temperature, maximum temperature, and precipitation, which limits its ability to support broader climate analysis involving variables such as wind, humidity, snowfall, or extreme weather events.
+
+For future work, we plan to expand the system by integrating an LLM API into the climate data warehouse. With this function, users could ask questions in natural language, and the system would automatically translate the questions into database queries, analyze the returned results, and generate readable explanations. We also plan to build a more user-friendly front page or dashboard so that users can directly interact with the database and obtain both LLM-generated insights and visualizations, such as monthly temperature trends, station comparisons, and precipitation charts. This improvement would make the project more accessible to non-technical users and turn the current backend data warehouse into an interactive climate analysis application.
+
+\section{AI Use Clarification}
+For this project, we made limited and appropriate use of LLM model as a form of technical assistance. Specifically, AI was used to help us refine parts of the database construction process and revise SQL queries by offering suggestions on structure, syntax, and debugging. It served only as a supporting assistant role. All major project decisions, including schema design, data processing logic, query objectives, and the final interpretation of results, were determined, implemented, and verified by our team. Any suggestions by AI were critically evaluated and manually validated before use.
+
 \end{document}
